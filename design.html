@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Todo List</title>
+    <style>
+      /* General Styles */
+      body {
+        font-family: "Arial", sans-serif;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+
+      .todo-container {
+        background: white;
+        width: 350px;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+
+      .todo-header {
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 20px;
+        color: #333;
+      }
+
+      .tabs {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+      }
+
+      .tab {
+        padding: 8px 15px;
+        font-size: 14px;
+        margin: 0 5px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        background-color: #f9f9f9;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .tab.active {
+        background-color: #ff6f61;
+        color: white;
+        border: none;
+      }
+
+      .tasks {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .task {
+        background-color: #2e3a87;
+        color: white;
+        padding: 10px 15px;
+        border-radius: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .task-text {
+        font-size: 14px;
+      }
+
+      .actions {
+        display: flex;
+        gap: 5px;
+      }
+
+      .actions button {
+        background: none;
+        border: none;
+        font-size: 16px;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .actions button:hover {
+        opacity: 0.8;
+      }
+
+      .actions .edit {
+        color: #4caf50;
+      }
+
+      .actions .delete {
+        color: #f44336;
+      }
+
+      .actions .complete {
+        color: #ffeb3b;
+      }
+
+      .add-task {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      .add-task input {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+      }
+
+      .add-task button {
+        padding: 10px 15px;
+        background-color: #007bff;
+        border: none;
+        border-radius: 5px;
+        color: white;
+        cursor: pointer;
+      }
+
+      .add-task button:disabled {
+        background-color: #aaa;
+        cursor: not-allowed;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="todo-container">
+      <div class="todo-header">My Tasks</div>
+      <div class="tabs">
+        <div class="tab active" data-tab="all">All</div>
+        <div class="tab" data-tab="active">Active</div>
+        <div class="tab" data-tab="completed">Completed</div>
+      </div>
+      <div class="tasks" id="tasks">
+        <!-- Tasks will be dynamically added here -->
+      </div>
+      <div class="add-task">
+        <input type="text" id="task-input" placeholder="Task Title" />
+        <button id="add-task-btn" disabled>Add Task</button>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const tabs = document.querySelectorAll(".tab");
+        const tasksContainer = document.getElementById("tasks");
+        const taskInput = document.getElementById("task-input");
+        const addTaskBtn = document.getElementById("add-task-btn");
+
+        let tasks = [];
+
+        // Tab functionality
+        tabs.forEach((tab) => {
+          tab.addEventListener("click", () => {
+            tabs.forEach((t) => t.classList.remove("active"));
+            tab.classList.add("active");
+            filterTasks(tab.dataset.tab);
+          });
+        });
+
+        // Enable/disable add button
+        taskInput.addEventListener("input", () => {
+          addTaskBtn.disabled = taskInput.value.trim() === "";
+        });
+
+        // Add a new task
+        addTaskBtn.addEventListener("click", () => {
+          const taskText = taskInput.value.trim();
+          if (taskText) {
+            tasks.push({ text: taskText, completed: false });
+            taskInput.value = "";
+            addTaskBtn.disabled = true;
+            renderTasks();
+          }
+        });
+
+        // Render tasks
+        function renderTasks(filter = "all") {
+          tasksContainer.innerHTML = "";
+          const filteredTasks = tasks.filter((task) => {
+            if (filter === "all") return true;
+            if (filter === "active") return !task.completed;
+            if (filter === "completed") return task.completed;
+          });
+
+          filteredTasks.forEach((task, index) => {
+            const taskElement = document.createElement("div");
+            taskElement.className = `task ${task.completed ? "completed" : ""}`;
+            taskElement.innerHTML = `
+            <div class="task-text">${task.text}</div>
+            <div class="actions">
+              <button class="edit">✏️</button>
+              <button class="delete">🗑️</button>
+              <button class="complete">${task.completed ? "✅" : "✔️"}</button>
+            </div>
+          `;
+
+            // Edit task
+            taskElement.querySelector(".edit").addEventListener("click", () => {
+              const newText = prompt("تعديل المهمة:", task.text);
+              if (newText) {
+                tasks[index].text = newText;
+                renderTasks(filter);
+              }
+            });
+
+            // Delete task
+            taskElement
+              .querySelector(".delete")
+              .addEventListener("click", () => {
+                tasks.splice(index, 1);
+                renderTasks(filter);
+              });
+
+            // Mark as complete/incomplete
+            taskElement
+              .querySelector(".complete")
+              .addEventListener("click", () => {
+                tasks[index].completed = !tasks[index].completed;
+                renderTasks(filter);
+              });
+
+            tasksContainer.appendChild(taskElement);
+          });
+        }
+
+        // Filter tasks based on tab
+        function filterTasks(filter) {
+          renderTasks(filter);
+        }
+      });
+    </script>
+  </body>
+</html>
